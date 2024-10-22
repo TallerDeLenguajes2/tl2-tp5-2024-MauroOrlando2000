@@ -17,7 +17,7 @@ namespace BaseDeDatosconTayer
                     var query = @"INSERT INTO Presupuestos (NombreDestinatario, FechaCreacion) VALUES (@NombreDestinatario, @FechaCreacion);";
                     var command = new SqliteCommand(query, connection);
                     command.Parameters.AddWithValue("@NombreDestinatario", budget.NombreDestinatario);
-                    command.Parameters.AddWithValue("@FechaCreacion", budget.FechaCreacion.ToString("o"));
+                    command.Parameters.AddWithValue("@FechaCreacion", budget.FechaCreacion);
                     anda = command.ExecuteNonQuery() > 0;
                     connection.Close();
                 }

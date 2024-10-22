@@ -12,7 +12,7 @@ namespace BaseDeDatosconTayer
 
         public int IdPresupuesto { get => idPresupuesto; }
         public string NombreDestinatario { get => nombreDestinatario; set => nombreDestinatario = value; }
-        public DateOnly FechaCreacion { get => fechaCreacion; }
+        public string FechaCreacion { get => fechaCreacion.ToString("o"); }
         public List<PresupuestoDetalle> Detalle { get => detalle; }
 
         public Presupuesto()
