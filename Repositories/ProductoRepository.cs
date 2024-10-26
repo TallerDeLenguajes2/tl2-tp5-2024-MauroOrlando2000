@@ -24,13 +24,40 @@ namespace BaseDeDatosconTayer
 
         public bool ModificarProducto(int id, Producto product)
         {
-            Producto aux = buscar(id);
-            
+            Producto? aux = Buscar(id);
+            if(aux != null)
+            {
+                aux = product;
+                return true;
+            }
+            else
+            {
+                return false;
+            }
         }
 
-        public Producto buscar(int id)
+        public List<Producto> ObtenerProductos()
         {
-            Producto aux = null; 
+            return listaProductos;
+        }
+
+        public bool EliminarProducto(int id)
+        {
+            Producto? aux = Buscar(id);
+            if(aux != null)
+            {
+                listaProductos.Remove(aux);
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+        public Producto? Buscar(int id)
+        {
+            Producto? aux = null; 
             foreach(Producto prod in listaProductos)
             {
                 if(prod.IdProducto == id)
