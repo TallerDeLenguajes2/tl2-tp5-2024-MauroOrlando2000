@@ -18,5 +18,10 @@ namespace BaseDeDatosconTayer
             descripcion = des;
             precio = price;
         }
+
+        public void CambiarID(int id)
+        {
+            idProducto = id;
+        }
     }
 }

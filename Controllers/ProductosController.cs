@@ -15,20 +15,17 @@ namespace BaseDeDatosconTayer
         [HttpPost("CrearProducto")]
         public IActionResult CrearProducto(Producto product)
         {
-            if(repositorioProductos.CrearProducto(product))
+            if(!repositorioProductos.CrearProducto(product))
             {
-                return Created(product);
+                return NotFound("Producto no creado");
             }
-            else
-            {
-                return Err
-            }
+            return Created($"api/productos/{product.IdProducto}", product);
         }
 
         [HttpGet("ObtenerProductos")]
         public IActionResult ObtenerProductos()
         {
-            if(!repositorioProductos.ObtenerProductos().Any())
+            if(repositorioProductos.ObtenerProductos().Count == 0)
             {
                 return NoContent();
             }
@@ -38,18 +35,31 @@ namespace BaseDeDatosconTayer
         [HttpGet("ObtenerProductoPorID/{id}")]
         public IActionResult ObtenerProductoPorID(int id)
         {
-            if(!repositorioProductos.ObtenerProductos().Any())
+            if(repositorioProductos.Buscar(id) == null || repositorioProductos.Buscar(id) == default(Producto))
             {
-                return NotFound("No hay productos");
+                return NotFound("No se encontro. Revise los datos ingresados");
             }
-            else
+            return Ok(repositorioProductos.Buscar(id));
+        }
+
+        [HttpPut("ModificarProducto/{id}")]
+        public IActionResult ModificarProducto(int id, Producto product)
+        {
+            if(!repositorioProductos.ModificarProducto(id, product))
             {
-                if(repositorioProductos.Buscar(id) == null)
-                {
-                    return NotFound("No se encontro. Revise los datos ingresados");
-                }
-                return Ok(repositorioProductos.Buscar(id));
+                return NotFound("No se encontro. Revise los datos ingresados");
             }
+            return Ok("Producto modificado exitosamente");
+        }
+
+        [HttpDelete("EliminarProducto/{id}")]
+        public IActionResult EliminarProducto(int id)
+        {
+            if(!repositorioProductos.EliminarProducto(id))
+            {
+                return NotFound("Producto no eliminado. Revise los datos ingresados");
+            }
+            return Ok($"Producto {id} eliminado");
         }
     }
 }

@@ -5,7 +5,6 @@ namespace BaseDeDatosconTayer
     public class ProductoRepository : IProductoRepository
     {
         string cadenaConexion = "Data Source=DB/Tienda.db;Cache=Shared;";
-        private readonly List<Producto> listaProductos = new List<Producto>();
 
         public bool CrearProducto(Producto product)
         {
@@ -14,28 +13,21 @@ namespace BaseDeDatosconTayer
             {
                 using(SqliteConnection connection = new SqliteConnection(cadenaConexion))
                 {
-                    List<Producto> productos = new List<Producto>();
-                    var query = "SELECT * FROM Productos;";
-                    connection.Open();
-                    var command = new SqliteCommand(query, connection);
-                    command.Connection.Open();
-                    using(var DataReader = command.ExecuteReader())
-                    {
-                        while(DataReader.Read())
-                        {
-                            int id = Convert.ToInt16(DataReader["idProducto"]);
-                            string desc = Convert.ToString(DataReader["Descripcion"]);
-                            int price = Convert.ToInt16(DataReader["Precio"]);
-                            Producto nuevo = new Producto(id, desc, price);
-                            productos.Add(nuevo);
-                        }
-                    }
-                    command.Connection.Close();
+                    List<Producto> productos = ObtenerProductos();
                     if(!productos.Contains(product))
                     {
-                        query = $"INSERT INTO Productos (idProducto, Descripcion, Precio) VALUES ({product.IdProducto}, {product.Descripcion}, {product.Precio});";
+                        int contador = 1;
+                        foreach(Producto producto in productos)
+                        {
+                            if(contador < producto.IdProducto)
+                            {
+                                contador = producto.IdProducto;
+                            }
+                        }
+                        product.CambiarID(++contador);
+                        var query = $"INSERT INTO Productos (idProducto, Descripcion, Precio) VALUES ({product.IdProducto}, '{product.Descripcion}', {product.Precio});";
                         connection.Open();
-                        command = new SqliteCommand(query, connection);
+                        var command = new SqliteCommand(query, connection);
                         command.Connection.Open();
                         anda = command.ExecuteNonQuery() > 0;
                         command.Connection.Close();
@@ -48,49 +40,73 @@ namespace BaseDeDatosconTayer
 
         public bool ModificarProducto(int id, Producto product)
         {
+            bool anda = false;
             Producto? aux = Buscar(id);
-            if(aux != null)
+            if(aux != null && aux != default(Producto))
             {
-                aux = product;
-                return true;
+                using(SqliteConnection connection = new SqliteConnection(cadenaConexion))
+                {
+                    var query = $"UPDATE Productos SET Descripcion = '{product.Descripcion}', Precio = {product.Precio} WHERE idProducto = {id};";
+                    connection.Open();
+                    var command = new SqliteCommand(query, connection);
+                    command.Connection.Open();
+                    anda = command.ExecuteNonQuery() > 0;
+                    command.Connection.Close();
+                    connection.Close();
+                }
             }
-            else
-            {
-                return false;
-            }
+            return anda;
         }
 
-        public IEnumerable<Producto> ObtenerProductos()
+        public List<Producto> ObtenerProductos()
         {
-            return listaProductos;
+            List<Producto> lista = new List<Producto>();
+            using(SqliteConnection connection = new SqliteConnection(cadenaConexion))
+            {
+                var query = "SELECT * FROM Productos;";
+                connection.Open();
+                var command = new SqliteCommand(query, connection);
+                command.Connection.Open();
+                using(var DataReader = command.ExecuteReader())
+                {
+                    while(DataReader.Read())
+                    {
+                        int id = Convert.ToInt32(DataReader["idProducto"]);
+                        string desc = Convert.ToString(DataReader["Descripcion"]);
+                        int price = Convert.ToInt32(DataReader["Precio"]);
+                        Producto nuevo = new Producto(id, desc, price);
+                        lista.Add(nuevo);
+                    }
+                }
+                command.Connection.Close();
+                connection.Close();
+            }
+            return lista;
         }
 
         public bool EliminarProducto(int id)
         {
             Producto? aux = Buscar(id);
-            if(aux != null)
+            bool anda = false;
+            if(aux != null && aux != default(Producto))
             {
-                listaProductos.Remove(aux);
-                return true;
+                using(SqliteConnection connection = new SqliteConnection(cadenaConexion))
+                {
+                    var query = $"DELETE FROM Productos WHERE idProducto = {id};";
+                    connection.Open();
+                    var command = new SqliteCommand(query, connection);
+                    command.Connection.Open();
+                    anda = command.ExecuteNonQuery() > 0;
+                    command.Connection.Close();
+                    connection.Close();
+                }
             }
-            else
-            {
-                return false;
-            }
+            return anda;
         }
 
         public Producto? Buscar(int id)
         {
-            Producto? aux = null; 
-            foreach(Producto prod in listaProductos)
-            {
-                if(prod.IdProducto == id)
-                {
-                    aux = prod;
-                    break;
-                }
-            }
-            return aux;
+            return ObtenerProductos().Find(elemento => elemento.IdProducto == id);
         }
     }
 }
