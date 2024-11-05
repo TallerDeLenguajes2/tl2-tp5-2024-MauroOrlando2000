@@ -4,124 +4,113 @@ namespace BaseDeDatosconTayer
 {
     public class PresupuestoRepository : IPresupuestoRepository
     {
-        string CadenaDeConexion = "Data Source=DB/Tienda.db;Cache=Shared";
+        string cadenaConexion = "Data Source=DB/Tienda.db;Cache=Shared";
 
         public bool CrearPresupuesto(Presupuesto budget)
         {
+            bool anda = false;
             if(budget != null)
             {
-                using(SqliteConnection connection = new SqliteConnection(CadenaDeConexion))
+                using(SqliteConnection connection = new SqliteConnection(cadenaConexion))
                 {
+                    List<Presupuesto> listaPresupuestos = ObtenerPresupuestos();
+                    int contador = 1;
+                    foreach(Presupuesto presupuesto in listaPresupuestos)
+                    {
+                        if(presupuesto.IdPresupuesto > contador)
+                        {
+                            contador = presupuesto.IdPresupuesto;
+                        }
+                    }
+                    budget.CambiarID(++contador);
                     connection.Open();
-                    var query = $"INSERT INTO Presupuestos (idPresupuesto, NombreDestinatario FechaCreacion) VALUES ({budget.IdPresupuesto}, @NombreDestinatario, @FechaCreacion);";
+                    var query = $"INSERT INTO Presupuestos (idPresupuesto, NombreDestinatario FechaCreacion) VALUES ({budget.IdPresupuesto}, '{budget.NombreDestinatario}', '{budget.FechaCreacion}');";
                     var command = new SqliteCommand(query, connection);
-                    command.Connection.Open();
-                    int safe = command.ExecuteNonQuery();
-                    if(safe > 0)
-                    {
-                        return true;
-                    }
-                    else
-                    {
-                        return false;
-                    }
+                    anda = command.ExecuteNonQuery() > 0;
+                    connection.Close();
                 }
             }
-            else
-            {
-                return false;
-            }
+            return anda;
         }
 
-        public IEnumerable<Presupuesto> ObtenerPresupuestos()
+        public List<Presupuesto> ObtenerPresupuestos()
         {
             List<Presupuesto> lista = new List<Presupuesto>();
-            using(SqliteConnection connection = new SqliteConnection())
+            using(SqliteConnection connection = new SqliteConnection(cadenaConexion))
             {
+                var query = "SELECT * FROM Presupuestos";
                 connection.Open();
-                var query = "SELECT * FROM Presupuestos LEFT JOIN PresupuestosDetalle USING(idPresupuesto) LEFT JOIN Productos USING(idProducto)";
                 var command = new SqliteCommand(query, connection);
-                command.Connection.Open();
                 using(var DataReader = command.ExecuteReader())
                 {
                     while(DataReader.Read())
                     {
-                        int idPres = Convert.ToInt16(DataReader["idPresupuesto"]);
-                        if(!lista.Exists(x => x.IdPresupuesto == idPres))
-                        {
-                            string nombre = Convert.ToString(DataReader["NombreDestinatario"]);
-                            string fecha = Convert.ToString(DataReader["FechaCreacion"]);
-                            Presupuesto nuevoPres = new Presupuesto(idPres, nombre, fecha, new List<PresupuestoDetalle>());
-                            lista.Add(nuevoPres);
-                        }
-                        if(Convert.ToString(DataReader["Descripcion"]) != null)
-                        {
-                            int idProd = Convert.ToInt16(DataReader["idProducto"]);
-                            string desc = Convert.ToString(DataReader["Descripcion"]);
-                            int price = Convert.ToInt16(DataReader["Precio"]);
-                            Producto nuevo = new Producto(idProd, desc, price);
-                            int cant = Convert.ToInt16(DataReader["Cantidad"]);
-                            lista.Find(x => x.IdPresupuesto == idPres).AgregarProducto(nuevo, cant);
-                        }
+                        int idPres = Convert.ToInt32(DataReader["idPresupuesto"]);
+                        string nombre = Convert.ToString(DataReader["NombreDestinatario"]);
+                        string fecha = Convert.ToString(DataReader["FechaCreacion"]);
+                        Presupuesto nuevoPres = new Presupuesto(idPres, nombre, fecha);
+                        lista.Add(nuevoPres);
                     }
                 }
+                query = "SELECT * FROM PresupuestosDetalle;";
+                command = new SqliteCommand(query, connection);
+                using(var DataReader = command.ExecuteReader())
+                {
+                    List<Producto> listaProductos = new ProductoRepository().ObtenerProductos();
+                    while(DataReader.Read())
+                    {
+                        int idPresDet = Convert.ToInt32(DataReader["idPresupuesto"]);
+                        int idProd = Convert.ToInt32(DataReader["idProducto"]);
+                        Producto aux = listaProductos.Find(x => x.IdProducto == idProd);
+                        int cant = Convert.ToInt32(DataReader["Cantidad"]);
+                        lista.Find(x => x.IdPresupuesto == idPresDet).AgregarProducto(aux, cant);
+                    }
+                }
+                connection.Close();
             }
             return lista;
         }
 
-        /* public bool AgregarProductoYCantidad(int id)
+        public Presupuesto? Buscar(int id)
         {
-            Presupuesto? aux = Buscar(id);
-            if(aux != null)
+            return ObtenerPresupuestos().Find(x => x.IdPresupuesto == id);
+        }
+
+        public bool AgregarProducto(int idPres, int idProd, int cant)
+        {
+            Presupuesto? aux = Buscar(idPres);
+            Producto? auxProd = new ProductoRepository().ObtenerProductos().Find(x => x.IdProducto == idProd);
+            bool anda = false;
+            if(aux != null && aux != default(Presupuesto) && auxProd != null && auxProd != default(Producto))
             {
-                int contador = 0, precio = 3000, cant = 5;
-                string? desc = "nuevo Producto";
-                foreach(Presupuesto pres in listaPresupuestos)
+                using(SqliteConnection connection = new SqliteConnection(cadenaConexion))
                 {
-                    foreach(PresupuestoDetalle detail in pres.Detalle)
-                    {
-                        if(detail.ObtenerProducto().IdProducto > contador)
-                        {
-                            contador = detail.ObtenerProducto().IdProducto;
-                        }
-                    }
+                    var query = $"INSERT INTO PresupuestosDetalle (idPresupuesto, idProducto, Cantidad) VALUES ({idPres}, {idProd}, {cant});";
+                    connection.Open();
+                    var command = new SqliteCommand(query, connection);
+                    anda = command.ExecuteNonQuery() > 0;
+                    connection.Close();
                 }
-                Producto nuevo = new Producto(++contador, desc, precio);
-                aux.AgregarProducto(nuevo, cant);
-                return true;
             }
-            else
-            {
-                return false;
-            }
+            return anda;
         }
 
         public bool EliminarPresupuesto(int id)
         {
             Presupuesto? aux = Buscar(id);
-            if(aux != null)
+            bool anda = false;
+            if(aux != null && aux != default(Presupuesto))
             {
-                listaPresupuestos.Remove(aux);
-                return true;
-            }
-            else
-            {
-                return false;
-            }
-        }
-
-        public Presupuesto? Buscar(int id)
-        {
-            Presupuesto? aux = null; 
-            foreach(Presupuesto pres in listaPresupuestos)
-            {
-                if(pres.IdPresupuesto == id)
+                using(SqliteConnection connection = new SqliteConnection(cadenaConexion))
                 {
-                    aux = pres;
-                    break;
+                    var query = $"DELETE FROM Presupuestos WHERE idPresupuesto = {id};";
+                    connection.Open();
+                    var command = new SqliteCommand(query, connection);
+                    anda = command.ExecuteNonQuery() > 0;
+                    connection.Close();
                 }
             }
-            return aux;
-        } */
+            return anda;
+        }
     }
 }

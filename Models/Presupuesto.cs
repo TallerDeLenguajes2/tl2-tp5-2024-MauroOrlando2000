@@ -9,19 +9,18 @@ namespace BaseDeDatosconTayer
         private string fechaCreacion;
         private List<PresupuestoDetalle> detalle;
 
-        public int IdPresupuesto { get => idPresupuesto; set => idPresupuesto = value; }
+        public int IdPresupuesto { get => idPresupuesto; }
         public string NombreDestinatario { get => nombreDestinatario; set => nombreDestinatario = value; }
         public string FechaCreacion { get => fechaCreacion; set => fechaCreacion = value; }
-        public List<PresupuestoDetalle> Detalle { get => detalle; }
 
         public Presupuesto(){}
 
-        public Presupuesto(int id, string nom, string fecha, List<PresupuestoDetalle> lista)
+        public Presupuesto(int id, string nom, string fecha)
         {
             idPresupuesto = id;
             nombreDestinatario = nom;
             fechaCreacion = fecha;
-            detalle = lista;
+            detalle = new List<PresupuestoDetalle>();
         }
 
         public double MontoPresupuesto()
@@ -29,7 +28,7 @@ namespace BaseDeDatosconTayer
             double monto = 0;
             foreach(PresupuestoDetalle detail in detalle)
             {
-                monto += detail.Cantidad * detail.ObtenerProducto().Precio;
+                monto += detail.Cantidad * detail.Producto.IdProducto;
             }
             return monto;
         }
@@ -50,10 +49,16 @@ namespace BaseDeDatosconTayer
             return cantidad;
         }
 
-        public void AgregarProducto(Producto product, int cant)
+        public bool AgregarProducto(Producto product, int cant)
         {
             PresupuestoDetalle nuevo = new PresupuestoDetalle(product, cant);
             detalle.Add(nuevo);
+            return true;
+        }
+
+        public void CambiarID(int id)
+        {
+            idPresupuesto = id;
         }
     }
 }

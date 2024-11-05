@@ -15,48 +15,51 @@ namespace BaseDeDatosconTayer
         [HttpPost("CrearPrespuesto")]
         public IActionResult CrearPresupuesto(Presupuesto presupuesto)
         {
-            if(presupuesto == null)
+            if(!repositorioPresupuestos.CrearPresupuesto(presupuesto))
             {
-                return NotFound("Revise lo datos ingresados");
+                return NotFound("Presupuesto no creado. Revise lo datos ingresados");
             }
-            return Ok(repositorioPresupuestos.CrearPresupuesto(presupuesto));
+            return Created($"api/presupuestos/{presupuesto.IdPresupuesto}", presupuesto);
         }
-
-        /* [HttpPost("AgregarProducto/{id}/ProductoDetalle")]
-        public IActionResult AgregarProducto(int id)
-        {
-            if(!repositorioPresupuestos.AgregarProductoYCantidad(id))
-            {
-                return NotFound("No se encontro. Revise los datos ingresados");
-            }
-            return Ok("Producto agregado exitosamente");
-        } */
 
         [HttpGet("ObtenerPresupuestos")]
         public IActionResult ObtenerPresupuestos()
         {
-            if(!repositorioPresupuestos.ObtenerPresupuestos().Any())
+            if(repositorioPresupuestos.ObtenerPresupuestos().Count == 0)
             {
                 return NoContent();
             }
             return Ok(repositorioPresupuestos.ObtenerPresupuestos());
         }
 
-        /* [HttpGet("ObtenerPresupuestos/{id}")]
+        [HttpGet("ObtenerPresupuestos/{id}")]
         public IActionResult ObtenerPresupuestoPorID(int id)
         {
-            if(!repositorioPresupuestos.ObtenerPresupuestos().Any())
+            if(repositorioPresupuestos.Buscar(id) == null || repositorioPresupuestos.Buscar(id) == default(Presupuesto))
             {
-                return NotFound("No hay presupuestos");
+                return NotFound("No se encontro. Revise los datos ingresados");
             }
-            else
+            return Ok(repositorioPresupuestos.Buscar(id));
+        }
+        
+        [HttpPost("AgregarProducto/{idPres}/{idProd}/{cant}")]
+        public IActionResult AgregarProducto(int idPres, int idProd, int cant)
+        {
+            if(!repositorioPresupuestos.AgregarProducto(idPres, idProd, cant))
             {
-                if(repositorioPresupuestos.Buscar(id) == null)
-                {
-                    return NotFound("No se encontro. Revise los datos ingresados");
-                }
-                return Ok(repositorioPresupuestos.Buscar(id));
+                return NotFound("No se encontro el presupuesto o el producto. Revise los datos ingresados");
             }
-        } */
+            return Ok("Producto agregado al presupuesto exitosamente");
+        }
+
+        [HttpDelete("EliminarPresupuesto/{id}")]
+        public IActionResult EliminarPresupuesto(int id)
+        {
+            if(!repositorioPresupuestos.EliminarPresupuesto(id))
+            {
+                return NotFound("Presupuesto no elimiando. Revise los datos ingresados");
+            }
+            return Ok("Presupuesto Eliminado");
+        }
     }
 }
