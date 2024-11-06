@@ -13,19 +13,11 @@ namespace BaseDeDatosconTayer
             {
                 using(SqliteConnection connection = new SqliteConnection(cadenaConexion))
                 {
-                    List<Presupuesto> listaPresupuestos = ObtenerPresupuestos();
-                    int contador = 1;
-                    foreach(Presupuesto presupuesto in listaPresupuestos)
-                    {
-                        if(presupuesto.IdPresupuesto > contador)
-                        {
-                            contador = presupuesto.IdPresupuesto;
-                        }
-                    }
-                    budget.CambiarID(++contador);
                     connection.Open();
-                    var query = $"INSERT INTO Presupuestos (idPresupuesto, NombreDestinatario FechaCreacion) VALUES ({budget.IdPresupuesto}, '{budget.NombreDestinatario}', '{budget.FechaCreacion}');";
+                    var query = @"INSERT INTO Presupuestos (NombreDestinatario, FechaCreacion) VALUES (@NombreDestinatario, @FechaCreacion);";
                     var command = new SqliteCommand(query, connection);
+                    command.Parameters.AddWithValue("@NombreDestinatario", budget.NombreDestinatario);
+                    command.Parameters.AddWithValue("@FechaCreacion", budget.FechaCreacion.ToString("o").Substring(0,10));
                     anda = command.ExecuteNonQuery() > 0;
                     connection.Close();
                 }
@@ -52,20 +44,6 @@ namespace BaseDeDatosconTayer
                         lista.Add(nuevoPres);
                     }
                 }
-                query = "SELECT * FROM PresupuestosDetalle;";
-                command = new SqliteCommand(query, connection);
-                using(var DataReader = command.ExecuteReader())
-                {
-                    List<Producto> listaProductos = new ProductoRepository().ObtenerProductos();
-                    while(DataReader.Read())
-                    {
-                        int idPresDet = Convert.ToInt32(DataReader["idPresupuesto"]);
-                        int idProd = Convert.ToInt32(DataReader["idProducto"]);
-                        Producto aux = listaProductos.Find(x => x.IdProducto == idProd);
-                        int cant = Convert.ToInt32(DataReader["Cantidad"]);
-                        lista.Find(x => x.IdPresupuesto == idPresDet).AgregarProducto(aux, cant);
-                    }
-                }
                 connection.Close();
             }
             return lista;
@@ -73,7 +51,30 @@ namespace BaseDeDatosconTayer
 
         public Presupuesto? Buscar(int id)
         {
-            return ObtenerPresupuestos().Find(x => x.IdPresupuesto == id);
+            Presupuesto? aux = ObtenerPresupuestos().Find(x => x.IdPresupuesto == id);
+            if(aux != null && aux != default(Presupuesto))
+            {
+                using(SqliteConnection connection = new SqliteConnection(cadenaConexion))
+                {
+                    var query = @"SELECT * FROM PresupuestosDetalle WHERE idPresupuesto = @id";
+                    connection.Open();
+                    var command = new SqliteCommand(query, connection);
+                    command.Parameters.AddWithValue("@id", id);
+                    using(var DataReader = command.ExecuteReader())
+                    {
+                        List<Producto> listaProductos = new ProductoRepository().ObtenerProductos();
+                        while(DataReader.Read())
+                        {
+                            int idProd = Convert.ToInt32(DataReader["idProducto"]);
+                            int cant = Convert.ToInt32(DataReader["Cantidad"]);
+                            Producto auxProd = listaProductos.Find(x => x.IdProducto == idProd);
+                            aux.AgregarProducto(auxProd, cant);
+                        }
+                    }
+                    connection.Close();
+                }
+            }
+            return aux;
         }
 
         public bool AgregarProducto(int idPres, int idProd, int cant)
@@ -85,9 +86,12 @@ namespace BaseDeDatosconTayer
             {
                 using(SqliteConnection connection = new SqliteConnection(cadenaConexion))
                 {
-                    var query = $"INSERT INTO PresupuestosDetalle (idPresupuesto, idProducto, Cantidad) VALUES ({idPres}, {idProd}, {cant});";
+                    var query = @"INSERT INTO PresupuestosDetalle (idPresupuesto, idProducto, Cantidad) VALUES (@idPres, @idProd, @cant);";
                     connection.Open();
                     var command = new SqliteCommand(query, connection);
+                    command.Parameters.AddWithValue("@idPres", idPres);
+                    command.Parameters.AddWithValue("@idProd", idProd);
+                    command.Parameters.AddWithValue("@cant", cant);
                     anda = command.ExecuteNonQuery() > 0;
                     connection.Close();
                 }
@@ -103,9 +107,10 @@ namespace BaseDeDatosconTayer
             {
                 using(SqliteConnection connection = new SqliteConnection(cadenaConexion))
                 {
-                    var query = $"DELETE FROM Presupuestos WHERE idPresupuesto = {id};";
+                    var query = @"DELETE FROM Presupuestos WHERE idPresupuesto = @id;";
                     connection.Open();
                     var command = new SqliteCommand(query, connection);
+                    command.Parameters.AddWithValue("@id", id);
                     anda = command.ExecuteNonQuery() > 0;
                     connection.Close();
                 }

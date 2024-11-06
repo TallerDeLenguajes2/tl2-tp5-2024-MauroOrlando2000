@@ -6,20 +6,25 @@ namespace BaseDeDatosconTayer
     {
         private int idPresupuesto;
         private string nombreDestinatario;
-        private string fechaCreacion;
+        private DateTime fechaCreacion;
         private List<PresupuestoDetalle> detalle;
 
         public int IdPresupuesto { get => idPresupuesto; }
         public string NombreDestinatario { get => nombreDestinatario; set => nombreDestinatario = value; }
-        public string FechaCreacion { get => fechaCreacion; set => fechaCreacion = value; }
+        public DateTime FechaCreacion { get => fechaCreacion; }
+        public List<PresupuestoDetalle> Detalle { get => detalle; }
 
-        public Presupuesto(){}
+        public Presupuesto()
+        {
+            fechaCreacion = DateTime.Today;
+            detalle = new List<PresupuestoDetalle>();
+        }
 
-        public Presupuesto(int id, string nom, string fecha)
+        public Presupuesto(int id, string nom)
         {
             idPresupuesto = id;
             nombreDestinatario = nom;
-            fechaCreacion = fecha;
+            fechaCreacion = DateTime.Today;
             detalle = new List<PresupuestoDetalle>();
         }
 
@@ -56,9 +61,9 @@ namespace BaseDeDatosconTayer
             return true;
         }
 
-        public void CambiarID(int id)
+        public void CambiarFecha(string fecha)
         {
-            idPresupuesto = id;
+            
         }
     }
 }

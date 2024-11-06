@@ -13,24 +13,14 @@ namespace BaseDeDatosconTayer
             {
                 using(SqliteConnection connection = new SqliteConnection(cadenaConexion))
                 {
-                    List<Producto> productos = ObtenerProductos();
-                    if(!productos.Contains(product))
+                    if(!ObtenerProductos().Contains(product))
                     {
-                        int contador = 1;
-                        foreach(Producto producto in productos)
-                        {
-                            if(contador < producto.IdProducto)
-                            {
-                                contador = producto.IdProducto;
-                            }
-                        }
-                        product.CambiarID(++contador);
-                        var query = $"INSERT INTO Productos (idProducto, Descripcion, Precio) VALUES ({product.IdProducto}, '{product.Descripcion}', {product.Precio});";
+                        var query = @"INSERT INTO Productos (Descripcion, Precio) VALUES (@Descripcion, @Precio);";
                         connection.Open();
                         var command = new SqliteCommand(query, connection);
-                        command.Connection.Open();
+                        command.Parameters.AddWithValue("@NombreDestinatario", product.Descripcion);
+                        command.Parameters.AddWithValue("@Precio", product.Precio);
                         anda = command.ExecuteNonQuery() > 0;
-                        command.Connection.Close();
                     }
                     connection.Close();
                 }
@@ -46,12 +36,13 @@ namespace BaseDeDatosconTayer
             {
                 using(SqliteConnection connection = new SqliteConnection(cadenaConexion))
                 {
-                    var query = $"UPDATE Productos SET Descripcion = '{product.Descripcion}', Precio = {product.Precio} WHERE idProducto = {id};";
+                    var query = @"UPDATE Productos SET Descripcion = @Descripcion, Precio = @Precio WHERE idProducto = @id;";
                     connection.Open();
                     var command = new SqliteCommand(query, connection);
-                    command.Connection.Open();
+                    command.Parameters.AddWithValue("@Descripcion", product.Descripcion);
+                    command.Parameters.AddWithValue("@Precio", product.Precio);
+                    command.Parameters.AddWithValue("@id", id);
                     anda = command.ExecuteNonQuery() > 0;
-                    command.Connection.Close();
                     connection.Close();
                 }
             }
@@ -66,7 +57,6 @@ namespace BaseDeDatosconTayer
                 var query = "SELECT * FROM Productos;";
                 connection.Open();
                 var command = new SqliteCommand(query, connection);
-                command.Connection.Open();
                 using(var DataReader = command.ExecuteReader())
                 {
                     while(DataReader.Read())
@@ -78,7 +68,6 @@ namespace BaseDeDatosconTayer
                         lista.Add(nuevo);
                     }
                 }
-                command.Connection.Close();
                 connection.Close();
             }
             return lista;
@@ -92,12 +81,11 @@ namespace BaseDeDatosconTayer
             {
                 using(SqliteConnection connection = new SqliteConnection(cadenaConexion))
                 {
-                    var query = $"DELETE FROM Productos WHERE idProducto = {id};";
+                    var query = @"DELETE FROM Productos WHERE idProducto = @id;";
                     connection.Open();
                     var command = new SqliteCommand(query, connection);
-                    command.Connection.Open();
+                    command.Parameters.AddWithValue("@id", id);
                     anda = command.ExecuteNonQuery() > 0;
-                    command.Connection.Close();
                     connection.Close();
                 }
             }
