@@ -42,8 +42,8 @@ namespace BaseDeDatosconTayer
             return Ok(repositorioPresupuestos.Buscar(id));
         }
         
-        [HttpPost("AgregarProducto/{idPres}/{idProd}/{cant}")]
-        public IActionResult AgregarProducto(int idPres, int idProd, int cant)
+        [HttpPut("AgregarProducto/{idPres}")]
+        public IActionResult AgregarProducto(int idPres,[FromBody] int idProd, int cant)
         {
             if(!repositorioPresupuestos.AgregarProducto(idPres, idProd, cant))
             {
@@ -59,7 +59,7 @@ namespace BaseDeDatosconTayer
             {
                 return NotFound("Presupuesto no elimiando. Revise los datos ingresados");
             }
-            return Ok("Presupuesto Eliminado");
+            return Ok($"Presupuesto {id} Eliminado");
         }
     }
 }

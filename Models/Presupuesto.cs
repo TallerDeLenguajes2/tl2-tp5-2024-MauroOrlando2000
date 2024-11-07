@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace BaseDeDatosconTayer
 {
@@ -6,17 +7,17 @@ namespace BaseDeDatosconTayer
     {
         private int idPresupuesto;
         private string nombreDestinatario;
-        private DateTime fechaCreacion;
+        private DateOnly fechaCreacion;
         private List<PresupuestoDetalle> detalle;
 
         public int IdPresupuesto { get => idPresupuesto; }
         public string NombreDestinatario { get => nombreDestinatario; set => nombreDestinatario = value; }
-        public DateTime FechaCreacion { get => fechaCreacion; }
+        public DateOnly FechaCreacion { get => fechaCreacion; }
         public List<PresupuestoDetalle> Detalle { get => detalle; }
 
         public Presupuesto()
         {
-            fechaCreacion = DateTime.Today;
+            fechaCreacion = DateOnly.FromDateTime(DateTime.Today);
             detalle = new List<PresupuestoDetalle>();
         }
 
@@ -24,7 +25,7 @@ namespace BaseDeDatosconTayer
         {
             idPresupuesto = id;
             nombreDestinatario = nom;
-            fechaCreacion = DateTime.Today;
+            fechaCreacion = DateOnly.FromDateTime(DateTime.Today);
             detalle = new List<PresupuestoDetalle>();
         }
 
@@ -63,7 +64,7 @@ namespace BaseDeDatosconTayer
 
         public void CambiarFecha(string fecha)
         {
-            
+            fechaCreacion = DateOnly.Parse(fecha);
         }
     }
 }

@@ -18,7 +18,7 @@ namespace BaseDeDatosconTayer
                         var query = @"INSERT INTO Productos (Descripcion, Precio) VALUES (@Descripcion, @Precio);";
                         connection.Open();
                         var command = new SqliteCommand(query, connection);
-                        command.Parameters.AddWithValue("@NombreDestinatario", product.Descripcion);
+                        command.Parameters.AddWithValue("@Descripcion", product.Descripcion);
                         command.Parameters.AddWithValue("@Precio", product.Precio);
                         anda = command.ExecuteNonQuery() > 0;
                     }

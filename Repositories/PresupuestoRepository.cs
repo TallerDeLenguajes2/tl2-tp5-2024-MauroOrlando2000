@@ -17,7 +17,7 @@ namespace BaseDeDatosconTayer
                     var query = @"INSERT INTO Presupuestos (NombreDestinatario, FechaCreacion) VALUES (@NombreDestinatario, @FechaCreacion);";
                     var command = new SqliteCommand(query, connection);
                     command.Parameters.AddWithValue("@NombreDestinatario", budget.NombreDestinatario);
-                    command.Parameters.AddWithValue("@FechaCreacion", budget.FechaCreacion.ToString("o").Substring(0,10));
+                    command.Parameters.AddWithValue("@FechaCreacion", budget.FechaCreacion.ToString("o"));
                     anda = command.ExecuteNonQuery() > 0;
                     connection.Close();
                 }
@@ -40,7 +40,8 @@ namespace BaseDeDatosconTayer
                         int idPres = Convert.ToInt32(DataReader["idPresupuesto"]);
                         string nombre = Convert.ToString(DataReader["NombreDestinatario"]);
                         string fecha = Convert.ToString(DataReader["FechaCreacion"]);
-                        Presupuesto nuevoPres = new Presupuesto(idPres, nombre, fecha);
+                        Presupuesto nuevoPres = new Presupuesto(idPres, nombre);
+                        nuevoPres.CambiarFecha(fecha);
                         lista.Add(nuevoPres);
                     }
                 }
@@ -107,7 +108,16 @@ namespace BaseDeDatosconTayer
             {
                 using(SqliteConnection connection = new SqliteConnection(cadenaConexion))
                 {
-                    var query = @"DELETE FROM Presupuestos WHERE idPresupuesto = @id;";
+                    var query = @"DELETE FROM PresupuestosDetalle WHERE idPresupuesto = @id";
+                    connection.Open();
+                    var command = new SqliteCommand(query, connection);
+                    command.Parameters.AddWithValue("@id", id);
+                    command.ExecuteNonQuery();
+                    connection.Close();
+                }
+                using(SqliteConnection connection = new SqliteConnection(cadenaConexion))
+                {
+                    var query = @"DELETE FROM Presupuestos WHERE idPresupuesto = @id";
                     connection.Open();
                     var command = new SqliteCommand(query, connection);
                     command.Parameters.AddWithValue("@id", id);
